@@ -1,0 +1,15 @@
+# ===== 项目约定（AGENTS.md 已定决策 #5）=====
+# seed.sql 与 demo_photos/ 进 Git；以下不进 Git：
+uploads/                # 开发期照片文件（本机文件系统存储）
+**/postgres-data/       # 本地 Docker 数据库数据文件
+
+# ===== 常规忽略 =====
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+dist/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
