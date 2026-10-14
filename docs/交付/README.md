@@ -64,7 +64,7 @@ docs/交付/
 
 ## Git 协作流程
 
-1. 组长把本仓库推到 GitHub（私有仓库），把组员加为 collaborator。
+1. 仓库已建在 GitHub 上：`sure-660322/electronic-photo-album-system`（**公开仓库**，选公开是为了用上 GitHub 的协作与自动化功能），组员已加为 collaborator。
 2. 每人拉取后创建自己的分支，分支名：`成员X-模块名`（如 `成员B-账户管理`）。
 3. 在自己的分支上只提交 `docs/交付/自己的文件夹/` 下的内容；公共文件（本 README、`AGENTS.md`、`docs/需求分析/`、`tools/`、`docs/绘图规范.md`）由组长统一维护，**不要改**。
 4. 完成后向 `main` 发 Pull Request，组长对照下方自查清单 review，通过后合并。

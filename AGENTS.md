@@ -59,7 +59,7 @@
 
 ## 交付与协作（GitHub）
 
-- 组长把本仓库推到 GitHub（私有），组员为 collaborator；每人建分支 `成员X-模块名`，完成后发 PR，组长 review 后合并。
+- 本仓库托管在 GitHub，**是公开仓库**（`sure-660322/electronic-photo-album-system`；选公开是为了用上 GitHub 的协作与自动化功能），组员为 collaborator；每人建分支 `成员X-模块名`，完成后发 PR，组长 review 后合并。
 - 交付物放 `docs/交付/编号-模块名-姓名/`（如 `1-账户管理-张三`）：**一人一个文件夹，只动自己的文件夹**；一个用例一个 md，图片放 `images/`（PNG + `.drawio` 源文件一起提交），md 里用相对路径引用图片。
 - 公共文件（本文件、`README.md`、`docs/需求分析/`、`docs/绘图规范.md`、`tools/` 共享脚本、`docs/交付/README.md`）由组长统一维护。
 - 详细交付规范和提交前自查清单见 [docs/交付/README.md](docs/交付/README.md)。
