@@ -46,6 +46,8 @@ def font(size_px, bold=False):
 def parse_style(s):
     kv = {}
     for item in s.split(";"):
+        if item == "text":
+            kv["shape"] = "text"
         if "=" in item:
             k, v = item.split("=", 1)
             kv[k] = v
@@ -156,6 +158,7 @@ def draw_edge(draw, pts, kv, scale, per_seg_gaps=None, r=0):
     width = max(2, round(float(kv.get("strokeWidth", 1.5)) * scale))
     if parse_dashed(kv):
         dashed_poly(draw, pts, color, width, 6 * scale, 4 * scale)
+        draw_arrow(draw, pts[-2], pts[-1], color, width, kv, scale)
         return
     gaps = per_seg_gaps or [[] for _ in pts[1:]]
     for (a, b), ts in zip(zip(pts, pts[1:]), gaps):
@@ -176,6 +179,9 @@ def draw_edge(draw, pts, kv, scale, per_seg_gaps=None, r=0):
             draw.line([(a[0] + cur * (b[0] - a[0]), a[1] + cur * (b[1] - a[1])),
                        (b[0], b[1])], fill=color, width=width)
     draw_arrow(draw, pts[-2], pts[-1], color, width, kv, scale)
+    if kv.get("startArrow", "none") != "none":
+        start_kv = dict(kv, endArrow=kv["startArrow"], endFill=kv.get("startFill", "1"))
+        draw_arrow(draw, pts[1], pts[0], color, width, start_kv, scale)
 
 
 def draw_text(draw, text, x, y, w, h, kv, scale, bg=False):
@@ -260,6 +266,7 @@ def draw_vertex(draw, value, kv, x, y, w, h, scale):
     elif kv.get("rounded") == "1":
         r = max(2, min(w, h) * 0.12)
         if dashed:
+            draw.rounded_rectangle([x, y, x + w, y + h], radius=r, fill=fill_color)
             pts = rounded_rect_path(x, y, w, h, r)
             dashed_poly(draw, pts, stroke, width, 6 * scale, 4 * scale)
         else:
@@ -267,6 +274,7 @@ def draw_vertex(draw, value, kv, x, y, w, h, scale):
                                    width=width, fill=fill_color)
     else:
         if dashed:
+            draw.rectangle([x, y, x + w, y + h], fill=fill_color)
             dashed_poly(draw, [(x, y), (x + w, y), (x + w, y + h), (x, y + h), (x, y)],
                         stroke, width, 6 * scale, 4 * scale)
         else:
@@ -320,7 +328,7 @@ def render(src, scale=2):
                           way, cell.get("source"), cell.get("target")))
 
     def is_text(kv):
-        return kv.get("fillColor") == "none" and kv.get("strokeColor") == "none"
+        return kv.get("shape") == "text" or (kv.get("fillColor") == "none" and kv.get("strokeColor") == "none")
 
     # 1) 图形（底板、框、类框、小人……）
     for value, kv, x, y, w, h in vertices:
@@ -331,26 +339,26 @@ def render(src, scale=2):
     # 2) 连线：普通线先画；带 jumpStyle 的线后画（交叉处留缺口 + 画跨越半圆）
     edge_data = [(kv, [sp] + way + [tp]) for kv, sp, tp, way, _, _ in edges
                  if sp is not None and tp is not None]
-    normal_segs = []
-    for kv, pts in edge_data:
-        if not kv.get("jumpStyle"):
-            normal_segs.extend(list(zip(pts, pts[1:])))
-    for kv, pts in edge_data:
+    # 跳线也可能与另一条跳线相交。按绘制顺序仅让后画的线跨越前线，
+    # 避免所有线都有 jumpStyle 时漏桥，或同一点出现两个桥。
+    ordered = [e for e in edge_data if not e[0].get("jumpStyle")] + [e for e in edge_data if e[0].get("jumpStyle")]
+    previous_segs = []
+    for kv, pts in ordered:
         if not kv.get("jumpStyle"):
             draw_edge(draw, pts, kv, scale)
-    for kv, pts in edge_data:
-        if not kv.get("jumpStyle"):
+            previous_segs.extend(zip(pts, pts[1:]))
             continue
         r = float(kv.get("jumpSize", 6)) * scale
         per_seg = []
         for a, b in zip(pts, pts[1:]):
             ts = []
-            for c, d in normal_segs:
+            for c, d in previous_segs:
                 t = seg_cross_t(a, b, c, d)
                 if t is not None:
                     ts.append(t)
             per_seg.append(ts)
         draw_edge(draw, pts, kv, scale, per_seg, r)
+        previous_segs.extend(zip(pts, pts[1:]))
 
     # 3) 纯文字标签（最后画，白底衬字压住连线）
     for value, kv, x, y, w, h in vertices:
