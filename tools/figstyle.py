@@ -9,7 +9,7 @@
     sys.path.insert(0, str(ROOT / "tools"))
     import figstyle as fs
 
-坐标约定：画布四周留 24px 白边；单张图内容宽度不超过 760px——正文 14px 时，
+坐标约定：画布四周留 24px 白边；两线交叉用 SEG_JUMP（jumpStyle=arc）画跨越符号；单张图内容宽度不超过 760px——正文 14px 时，
 插入 Word 满宽 15.5cm 后等效字号仍不小于 8pt（详见 docs/绘图规范.md 第 3 节）。
 
 改图流程：改脚本 → 重新生成 .drawio → 导出 PNG → 目检。导出方式见
@@ -81,6 +81,8 @@ SEG_OPEN = (f"html=1;rounded=0;strokeColor={EDGE};strokeWidth=1.5;startArrow=non
             f"endArrow=open;endFill=0;endSize=9;")
 SEG_NONE = (f"html=1;rounded=0;strokeColor={EDGE};strokeWidth=1.5;"
             f"startArrow=none;endArrow=none;")
+# 与其它线交叉时画跨越符号（小半圆桥），避免"裸交叉"看起来像连在一起
+SEG_JUMP = SEG + "jumpStyle=arc;jumpSize=6;"
 
 
 def esc(s):

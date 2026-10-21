@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """无 draw.io 桌面版时的应急渲染器：把 .drawio 渲染成 PNG（几何与 draw.io 一致）。
 
-正式流程仍然是 draw.io 命令行导出（见 docs/绘图规范.md 第 6 节）。本脚本只用于
+正式流程仍然是 draw.io 命令行导出（见 docs/绘图规范.md 第 6 节）。
+支持 跳线 样式：带 jumpStyle=arc 的连线在与其它线交叉处留缺口并画小半圆桥。本脚本只用于
 没有安装 draw.io 的机器，保证"脚本 → .drawio → PNG"这条链路在任何机器上都能走通；
 导出后统一跑 tools/postprocess_png.py 裁边。
 
@@ -120,6 +121,60 @@ def wrap_text(text, fnt, max_w):
                 cur = ch
         lines.append(cur)
     return lines
+
+
+def seg_cross_t(p1, p2, p3, p4):
+    """两线段是否真正相交；返回交点在线段 1 上的参数 t（0~1），不相交返回 None。"""
+    x1, y1 = p1
+    x2, y2 = p2
+    x3, y3 = p3
+    x4, y4 = p4
+    d = (x2 - x1) * (y4 - y3) - (y2 - y1) * (x4 - x3)
+    if abs(d) < 1e-9:
+        return None
+    t = ((x3 - x1) * (y4 - y3) - (y3 - y1) * (x4 - x3)) / d
+    u = ((x3 - x1) * (y2 - y1) - (y3 - y1) * (x2 - x1)) / d
+    if 0.02 < t < 0.98 and 0.02 < u < 0.98:
+        return t
+    return None
+
+
+def draw_jump_arc(draw, a, b, t, color, width, r):
+    """在交叉点画跨越半圆：水平段向上拱，竖直段向右拱。"""
+    cx = a[0] + t * (b[0] - a[0])
+    cy = a[1] + t * (b[1] - a[1])
+    box = [cx - r, cy - r, cx + r, cy + r]
+    if abs(b[0] - a[0]) >= abs(b[1] - a[1]):
+        draw.arc(box, 180, 360, fill=color, width=width)   # 上半圆
+    else:
+        draw.arc(box, 270, 90, fill=color, width=width)    # 右半圆
+
+
+def draw_edge(draw, pts, kv, scale, per_seg_gaps=None, r=0):
+    color = kv.get("strokeColor", "#4A5A6A")
+    width = max(2, round(float(kv.get("strokeWidth", 1.5)) * scale))
+    if parse_dashed(kv):
+        dashed_poly(draw, pts, color, width, 6 * scale, 4 * scale)
+        return
+    gaps = per_seg_gaps or [[] for _ in pts[1:]]
+    for (a, b), ts in zip(zip(pts, pts[1:]), gaps):
+        length = math.hypot(b[0] - a[0], b[1] - a[1])
+        if length == 0:
+            continue
+        cur = 0.0
+        for t in sorted(ts):
+            ta = max(0.0, t - r / length)
+            tb = min(1.0, t + r / length)
+            if ta > cur:
+                draw.line([(a[0] + cur * (b[0] - a[0]), a[1] + cur * (b[1] - a[1])),
+                           (a[0] + ta * (b[0] - a[0]), a[1] + ta * (b[1] - a[1]))],
+                          fill=color, width=width)
+            draw_jump_arc(draw, a, b, t, color, width, r)
+            cur = max(cur, tb)
+        if cur < 1.0:
+            draw.line([(a[0] + cur * (b[0] - a[0]), a[1] + cur * (b[1] - a[1])),
+                       (b[0], b[1])], fill=color, width=width)
+    draw_arrow(draw, pts[-2], pts[-1], color, width, kv, scale)
 
 
 def draw_text(draw, text, x, y, w, h, kv, scale, bg=False):
@@ -259,18 +314,29 @@ def render(src, scale=2):
             continue
         draw_vertex(draw, value, kv, x, y, w, h, scale)
 
-    # 2) 连线
-    for kv, sp, tp, way, src_id, dst_id in edges:
-        if sp is None or tp is None:
+    # 2) 连线：普通线先画；带 jumpStyle 的线后画（交叉处留缺口 + 画跨越半圆）
+    edge_data = [(kv, [sp] + way + [tp]) for kv, sp, tp, way, _, _ in edges
+                 if sp is not None and tp is not None]
+    normal_segs = []
+    for kv, pts in edge_data:
+        if not kv.get("jumpStyle"):
+            normal_segs.extend(list(zip(pts, pts[1:])))
+    for kv, pts in edge_data:
+        if not kv.get("jumpStyle"):
+            draw_edge(draw, pts, kv, scale)
+    for kv, pts in edge_data:
+        if not kv.get("jumpStyle"):
             continue
-        pts = [sp] + way + [tp]
-        color = kv.get("strokeColor", "#4A5A6A")
-        width = max(2, round(float(kv.get("strokeWidth", 1.5)) * scale))
-        if parse_dashed(kv):
-            dashed_poly(draw, pts, color, width, 6 * scale, 4 * scale)
-        else:
-            draw.line(pts, fill=color, width=width, joint="curve")
-        draw_arrow(draw, pts[-2], pts[-1], color, width, kv, scale)
+        r = float(kv.get("jumpSize", 6)) * scale
+        per_seg = []
+        for a, b in zip(pts, pts[1:]):
+            ts = []
+            for c, d in normal_segs:
+                t = seg_cross_t(a, b, c, d)
+                if t is not None:
+                    ts.append(t)
+            per_seg.append(ts)
+        draw_edge(draw, pts, kv, scale, per_seg, r)
 
     # 3) 纯文字标签（最后画，白底衬字压住连线）
     for value, kv, x, y, w, h in vertices:
