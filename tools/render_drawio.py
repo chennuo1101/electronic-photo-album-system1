@@ -2,7 +2,7 @@
 """无 draw.io 桌面版时的应急渲染器：把 .drawio 渲染成 PNG（几何与 draw.io 一致）。
 
 正式流程仍然是 draw.io 命令行导出（见 docs/绘图规范.md 第 6 节）。
-支持 跳线 样式：带 jumpStyle=arc 的连线在与其它线交叉处留缺口并画小半圆桥。本脚本只用于
+支持跳线样式：带 jumpStyle=arc 的连线在与其它线交叉处留缺口并画小半圆桥。本脚本只用于
 没有安装 draw.io 的机器，保证"脚本 → .drawio → PNG"这条链路在任何机器上都能走通；
 导出后统一跑 tools/postprocess_png.py 裁边。
 
