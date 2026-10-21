@@ -1,247 +1,264 @@
 # -*- coding: utf-8 -*-
-"""成员B · 账户管理模块「用户注册」图稿：活动图 + 类模型图 + 协作图。
+"""账户管理模块图稿（绘图规范 v2.1 示例）。
 
-本目录下「用户登录」的三张图与模块用例图不由本脚本生成——它们按组长 835c105
-《修订成员B交付示例图稿》后的新版样例，从 main 的 docs/交付/1-账户管理-成员B/
-逐文件整体拷贝（字节一致），本脚本只负责「用户注册」的三张图。
+本脚本一次生成整个模块的 7 张图：
+    账户管理模块用例图
+    用户注册_活动图 / 用户注册_类模型图 / 用户注册_协作图
+    用户登录_活动图 / 用户登录_类模型图 / 用户登录_协作图
 
-用法：
-    python gen_figures.py                # 在本目录 images/ 下生成 .drawio
-    然后用本机 draw.io 命令行导出 PNG（本机 draw.io 为 Windows 版，在 WSL 下必须
-    把路径转成 Windows 路径，否则报 input file not found）：
-        cd images
-        WD=$(wslpath -w "$PWD")
-        "/mnt/c/Program Files/draw.io/draw.io.exe" -x -f png --scale 2 \
-          -o "$WD\\用户注册_活动图.png" "$WD\\用户注册_活动图.drawio"
+风格由 tools/figstyle.py 统一（色板、字号、线宽、类框、标签），脚本只写坐标和文字，
+不再各自维护一套 FONT/BOX 常量——这是"全组统一绘图规范"的落地方式。
 
-风格遵循 docs/绘图规范.md：白底、黑白线条（#444444）、Microsoft YaHei、走线不穿框、
-扩展流程必须画成分支并形成回路。图编号不烤进图片，由组长整合排版时统一编号。
+流程（命令都在项目根目录执行）：
+    1. python "docs/交付/1-账户管理-钟标/gen_figures.py"       # 生成 images/*.drawio
+    2. draw.io 命令行导出 PNG（推荐，把路径换成本机 draw.io）：
+         drawio -x -f png --scale 2 -o "docs/交付/1-账户管理-钟标/images/xxx.png" "docs/交付/1-账户管理-钟标/images/xxx.drawio"
+       没有装 draw.io 时用应急渲染器（几何一致）：
+         python tools/render_drawio.py "docs/交付/1-账户管理-钟标/images"
+    3. python tools/postprocess_png.py "docs/交付/1-账户管理-钟标/images"   # 裁边+补白+字号预算
+    4. 逐张目检：无穿框、无压字、四周边距一致。
 
-设计约定（2026-09 修订，与 docs/交付/1-账户管理-成员B/gen_login_diagrams.py 对齐）：
-- 协作图：对象框内不写冒号；每条消息一根两端坐标写死的独立直线段（不吸附图元），
-  编号标签紧贴自己那根线（水平线标签在线上方/下方，垂直线标签在线的左/右侧），
-  两对象间的双向消息画成两条平行线，方向一目了然。
-- 类模型图：类框用三个独立矩形拼成"类名/属性/方法"三栏，不用 <hr> 灰色分隔线；
-  同一关联线上的所有文字（关联名 + 两端多重性）全部放在线的同一侧，水平线统一在
-  上方、垂直线统一在右方。
-- 导出说明：draw.io 命令行按"内容包围盒"裁剪 PNG，内容以外的白边会被裁掉。为使
-  边缘的标签不贴图，每张图加一块比内容略大（四周 10~15px）的白色底板，底板不可见
-  但会被计入包围盒，从而得到整齐的四周边距。
+用例、参与者、流程步骤与 docs/需求分析/02_用例描述初稿.md 完全一致，只改视觉与版面。
 """
+import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent.parent.parent
-OUT = ROOT / "docs" / "交付" / "1-账户管理-钟标" / "images"
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parents[2]                       # 1-账户管理-钟标 → 交付 → docs → 项目根
+sys.path.insert(0, str(ROOT / "tools"))
+
+import figstyle as fs  # noqa: E402
+
+OUT = HERE / "images"
 OUT.mkdir(parents=True, exist_ok=True)
 
-FONT = "fontFamily=Microsoft YaHei;fontSize=12;fontColor=#222222;"
-BOX = "rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#444444;" + FONT
-NOTE = "rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#444444;dashed=1;" + FONT
-DIAMOND = "rhombus;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#444444;" + FONT
-ACTOR = ("shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;"
-         "fillColor=#FFFFFF;strokeColor=#444444;" + FONT)
-CLASS_TITLE = ("rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#444444;"
-               "align=center;verticalAlign=middle;fontStyle=1;" + FONT)
-CLASS_COMP = ("rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#444444;"
-              "verticalAlign=top;align=left;spacingLeft=10;spacingTop=6;" + FONT)
-TEXT = "text;html=1;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;" + FONT
-TEXT_L = TEXT.replace("align=center", "align=left")
-TEXT_R = TEXT.replace("align=center", "align=right")
-EDGE = ("edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#444444;strokeWidth=1;"
-        "fontFamily=Microsoft YaHei;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;")
-SEG = ("html=1;rounded=0;strokeColor=#444444;strokeWidth=1;"
-       "startArrow=none;endArrow=open;endFill=0;")    # 两端坐标写死的独立线段
+# 版面预算（见 docs/绘图规范.md 第 3 节）：画布留 24px 白边，正文 14px，
+# 内容宽度尽量不超过 760px（满宽 15.5cm 时等效字号 ≥ 8pt）。
 
+# ================= 1. 账户管理模块用例图 =================
+# 普通用户垂直居中于两个用例之间，两条连线角度对称；管理员与"用户登录"同高。
+# 小人图形沿用原有 umlActor，不做任何改动。
+fs.save(OUT / "账户管理模块用例图.drawio", [
+    fs.vertex("boundary", "电子相册系统", fs.BOUNDARY, 150, 24, 380, 320),
+    fs.vertex("uc_reg", "用户注册", fs.USECASE, 350, 64, 160, 52),
+    fs.vertex("uc_login", "用户登录", fs.USECASE, 350, 254, 160, 52),
+    fs.vertex("actor_user", "普通用户", fs.ACTOR, 70, 150, 30, 60),
+    fs.vertex("actor_admin", "管理员", fs.ACTOR, 70, 250, 30, 60),
+    fs.poly("l_reg", [(100, 180), (350, 90)], fs.SEG_NONE),
+    fs.poly("l_login_user", [(100, 180), (350, 280)], fs.SEG_NONE),
+    fs.poly("l_login_admin", [(100, 280), (350, 280)], fs.SEG_NONE),
+], page_w=554, page_h=368)
 
-def esc(s):
-    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "&#xa;")
+# ================= 2. 用户注册_活动图 =================
+# 主线一列（x=24..304，中心 164）；三个扩展流程各一个判断 + 虚线提示框 + 回路。
+# 三条回路走右侧三条通道（x=604/572/540），从"输入"步骤右缘的三个高度拐回，
+# 互不交叉；每条回路标签贴自己那条竖线，不放长横线上，避免压线。
+fs.save(OUT / "用户注册_活动图.drawio", [
+    fs.vertex("start", "", fs.START, 152, 20, 24, 24),
+    fs.vertex("a1", "打开注册页面", fs.BOX, 24, 56, 280, 40),
+    fs.vertex("a2", "输入用户名、密码、确认密码、邮箱", fs.BOX, 24, 122, 280, 70),
+    fs.vertex("d1", "信息是否完整？", fs.DIAMOND, 74, 212, 180, 76),
+    fs.vertex("e1", "提示补全输入", fs.NOTE, 354, 224, 150, 52),
+    fs.vertex("d2", "两次密码是否一致？", fs.DIAMOND, 74, 316, 180, 76),
+    fs.vertex("e2", "提示密码不一致", fs.NOTE, 354, 328, 150, 52),
+    fs.vertex("a3", "系统检查用户名是否已被注册", fs.SYS, 24, 420, 280, 40),
+    fs.vertex("d3", "用户名已存在？", fs.DIAMOND, 74, 490, 180, 76),
+    fs.vertex("e3", "提示用户名已被占用", fs.NOTE, 354, 502, 150, 52),
+    fs.vertex("a4", "创建新账户", fs.SYS, 24, 594, 280, 40),
+    fs.vertex("a5", "提示注册成功，跳转登录页面", fs.SYS, 24, 660, 280, 40),
+    fs.vertex("end", "", fs.END, 152, 730, 24, 24),
+    fs.vertex("end_dot", "", fs.START, 158, 736, 12, 12),
 
+    # 主流程
+    fs.poly("f1", [(164, 44), (164, 56)]),
+    fs.poly("f2", [(164, 96), (164, 122)]),
+    fs.poly("f3", [(164, 192), (164, 212)]),
+    fs.poly("f4", [(164, 288), (164, 316)]),
+    fs.poly("f5", [(164, 392), (164, 420)]),
+    fs.poly("f6", [(164, 460), (164, 490)]),
+    fs.poly("f7", [(164, 566), (164, 594)]),
+    fs.poly("f8", [(164, 634), (164, 660)]),
+    fs.poly("f9", [(164, 700), (164, 730)]),
+    # 扩展流程 2a / 2b / 3a：判断 → 提示 → 回路
+    fs.poly("b1", [(254, 250), (354, 250)]),
+    fs.poly("b2", [(254, 354), (354, 354)]),
+    fs.poly("b3", [(254, 528), (354, 528)]),
+    # r1 在上方横穿 r2/r3 两条回程竖线，交叉处画跨越符号；r2 拆成两段，
+    # 只让横穿 r3 的那一段带跨越符号，避免同一个交叉点画两个桥。
+    fs.poly("r1", [(504, 250), (604, 250), (604, 146), (304, 146)], fs.SEG_JUMP),
+    fs.poly("r2a", [(504, 354), (572, 354)], fs.SEG_JUMP_NONE),
+    fs.poly("r2b", [(572, 354), (572, 166), (304, 166)]),
+    fs.poly("r3", [(504, 528), (540, 528), (540, 186), (304, 186)]),
+    # 分支标签：是/否 统一放线的外侧；回路标签贴各自竖线
+    fs.label("t_no1", "否", 270, 228, 20),
+    fs.label("t_no2", "否", 270, 332, 20),
+    fs.label("t_yes3", "是", 270, 506, 20),
+    fs.label("t_yes1", "是", 170, 290, 20),
+    fs.label("t_yes2", "是", 170, 394, 20),
+    fs.label("t_no3", "否", 170, 568, 20),
+    fs.label("t_r1", "返回步骤 2", 610, 180, 90, align="left"),
+    fs.label("t_r2", "返回步骤 2", 578, 300, 90, align="left"),
+    fs.label("t_r3", "返回步骤 2", 438, 420, 90, align="right"),
+], page_w=700, page_h=778)
 
-def vertex(cid, value, style, x, y, w, h, parent="1"):
-    return (f'<mxCell id="{cid}" value="{esc(value)}" style="{style}" vertex="1" parent="{parent}">'
-            f'<mxGeometry x="{x}" y="{y}" width="{w}" height="{h}" as="geometry"/></mxCell>')
+# ================= 3. 用户登录_活动图 =================
+# 主流程同注册图；两个扩展流程（输入不完整、验证失败）各走一条回程通道，
+# 上方回程横线与下方回程竖线交叉处画跨越符号。
+# 验证通过后按角色分流：两条线先从菱形左右顶点向两边展开，再各自向下
+# 指到对应的活动框（每个分支只折一次），最后汇合到同一个活动终点。
+fs.save(OUT / "用户登录_活动图.drawio", [
+    fs.vertex("start", "", fs.START, 192, 20, 24, 24),
+    fs.vertex("a1", "打开登录页面", fs.BOX, 64, 56, 280, 40),
+    fs.vertex("a2", "输入用户名和密码", fs.BOX, 64, 122, 280, 60),
+    fs.vertex("d1", "输入完整？", fs.DIAMOND, 114, 208, 180, 76),
+    fs.vertex("e1", "提示补全输入", fs.NOTE, 384, 220, 200, 52),
+    fs.vertex("a3", "系统验证用户名和密码", fs.SYS, 64, 310, 280, 40),
+    fs.vertex("d2", "验证通过？", fs.DIAMOND, 114, 376, 180, 76),
+    fs.vertex("e2", "提示“用户名或密码错误”", fs.NOTE, 384, 388, 200, 52),
+    fs.vertex("d3", "账户角色？", fs.DIAMOND, 114, 478, 180, 76),
+    fs.vertex("a4", "进入个人主页", fs.SYS, 34, 610, 160, 44),
+    fs.vertex("a5", "进入后台管理页", fs.SYS, 214, 610, 160, 44),
+    fs.vertex("end", "", fs.END, 192, 710, 24, 24),
+    fs.vertex("end_dot", "", fs.START, 198, 716, 12, 12),
 
+    # 主流程
+    fs.poly("f1", [(204, 44), (204, 56)]),
+    fs.poly("f2", [(204, 96), (204, 122)]),
+    fs.poly("f3", [(204, 182), (204, 208)]),
+    fs.poly("f4", [(204, 284), (204, 310)]),
+    fs.poly("f5", [(204, 350), (204, 376)]),
+    fs.poly("f6", [(204, 452), (204, 478)]),
+    # 扩展流程 2a / 3a
+    fs.poly("b1", [(294, 246), (384, 246)]),
+    fs.poly("b2", [(294, 414), (384, 414)]),
+    fs.poly("r1", [(584, 246), (634, 246), (634, 146), (344, 146)], fs.SEG_JUMP),
+    fs.poly("r2", [(584, 414), (600, 414), (600, 170), (344, 170)]),
+    # 角色分流：从菱形左右顶点先向外展开，再竖向下指到对应活动框
+    fs.poly("s1", [(114, 516), (74, 516), (74, 610)]),
+    fs.poly("s2", [(294, 516), (334, 516), (334, 610)]),
+    fs.poly("s3", [(114, 654), (114, 722), (192, 722)]),
+    fs.poly("s4", [(294, 654), (294, 722), (216, 722)]),
+    # 分支标签
+    fs.label("t_no1", "否", 310, 224, 20),
+    fs.label("t_no2", "否", 310, 392, 20),
+    fs.label("t_yes1", "是", 210, 286, 20),
+    fs.label("t_yes2", "是", 210, 454, 20),
+    fs.label("t_role1", "普通用户", 24, 496, 56),
+    fs.label("t_role2", "管理员", 300, 496, 56),
+    fs.label("t_r1", "返回步骤 2", 640, 180, 90, align="left"),
+    fs.label("t_r2", "返回步骤 2", 498, 300, 90, align="right"),
+], page_w=730, page_h=758)
 
-def edge(eid, src, dst, label="", style=EDGE, parent="1", points=None):
-    val = f' value="{esc(label)}"' if label else ' value=""'
-    if points:
-        pts = "".join(f'<mxPoint x="{x}" y="{y}"/>' for x, y in points)
-        geom = f'<mxGeometry relative="1" as="geometry"><Array as="points">{pts}</Array></mxGeometry>'
-    else:
-        geom = '<mxGeometry relative="1" as="geometry"/>'
-    return (f'<mxCell id="{eid}"{val} style="{style}" edge="1" parent="{parent}" '
-            f'source="{src}" target="{dst}">{geom}</mxCell>')
-
-
-def seg(eid, x1, y1, x2, y2, style=SEG):
-    """两端坐标写死的独立线段（不吸附图元，箭头方向 = (x1,y1) → (x2,y2)）。"""
-    return (f'<mxCell id="{eid}" value="" style="{style}" edge="1" parent="1">'
-            f'<mxGeometry relative="1" as="geometry">'
-            f'<mxPoint x="{x1}" y="{y1}" as="sourcePoint"/>'
-            f'<mxPoint x="{x2}" y="{y2}" as="targetPoint"/>'
-            f'</mxGeometry></mxCell>')
-
-
-def mxfile(cells, page_w, page_h, bg):
-    """bg = (x, y, w, h)：比内容略大的白色底板，用来在导出时留出整齐的四周边距。"""
-    bx, by, bw, bh = bg
-    bgcell = vertex("page_bg", "", "rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=none;",
-                    bx, by, bw, bh)
-    body = "\n        ".join([bgcell] + cells)
-    return f'''<?xml version="1.0" encoding="UTF-8"?>
-<mxfile host="app.diagrams.net" type="device" version="24.7.5">
-  <diagram name="第1页" id="p1">
-    <mxGraphModel dx="1000" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="{page_w}" pageHeight="{page_h}" math="0" shadow="0">
-      <root>
-        <mxCell id="0" />
-        <mxCell id="1" parent="0" />
-        {body}
-      </root>
-    </mxGraphModel>
-  </diagram>
-</mxfile>
-'''
-
-
-def save(name, cells, w, h, bg):
-    (OUT / f"{name}.drawio").write_text(mxfile(cells, w, h, bg), encoding="utf-8")
-    print("written:", OUT / f"{name}.drawio")
-
-
-def classbox(cid, stereotype, name, attrs, methods, x, y, w):
-    """三栏类框：标题栏 + 属性栏 + 方法栏三个矩形拼接，栏间是共享黑边框。"""
-    LINE_H, PAD = 24, 12
-    h_title = 40
-    h_attrs = max(1, len(attrs)) * LINE_H + PAD
-    h_meth = max(1, len(methods)) * LINE_H + PAD
-    title = f"«{stereotype}» {name}"
-    return [
-        vertex(cid + "_t", title, CLASS_TITLE, x, y, w, h_title),
-        vertex(cid + "_a", "\n".join(attrs), CLASS_COMP, x, y + h_title, w, h_attrs),
-        vertex(cid + "_m", "\n".join(methods), CLASS_COMP,
-               x, y + h_title + h_attrs, w, h_meth),
-    ], h_title + h_attrs + h_meth
-
-
-# ================= 1. 用户注册活动图 =================
-# 主线一列（x=90..370，中心 230）：基本流程自上而下；
-# 三个扩展流程 2a/2b/3a 各画一个菱形判断 + 虚线错误框 + 回路，回程竖线分三条通道
-# （x=575 / 680 / 800），从"输入"步骤右侧的不同高度拐回，互不穿越。
-cells = [
-    vertex("start", "", "ellipse;html=1;fillColor=#444444;strokeColor=#444444;", 218, 24, 24, 24),
-    vertex("a1", "打开注册页面", BOX, 90, 70, 280, 44),
-    vertex("a2", "输入用户名、密码、确认密码、邮箱", BOX, 90, 150, 280, 44),
-    vertex("d1", "信息是否完整？", DIAMOND, 140, 234, 180, 90),
-    vertex("err1", "提示补全输入", NOTE, 500, 251, 150, 56),
-    vertex("d2", "两次密码是否一致？", DIAMOND, 140, 364, 180, 90),
-    vertex("err2", "提示密码不一致", NOTE, 500, 381, 150, 56),
-    vertex("a3", "系统检查用户名是否已被注册", BOX, 90, 494, 280, 44),
-    vertex("d3", "用户名已存在？", DIAMOND, 140, 578, 180, 90),
-    vertex("err3", "提示用户名已被占用", NOTE, 500, 595, 150, 56),
-    vertex("a4", "创建新账户", BOX, 90, 708, 280, 44),
-    vertex("a5", "提示注册成功，跳转登录页面", BOX, 90, 788, 280, 44),
-    vertex("end", "", "ellipse;html=1;fillColor=#FFFFFF;strokeColor=#444444;strokeWidth=2;", 218, 872, 24, 24),
-    vertex("end_in", "", "ellipse;html=1;fillColor=#444444;strokeColor=#444444;", 224, 878, 12, 12),
-    # 基本流程
-    edge("f1", "start", "a1"),
-    edge("f2", "a1", "a2"),
-    edge("f3", "a2", "d1"),
-    edge("f6", "d1", "d2", "是"),
-    edge("f9", "d2", "a3", "是"),
-    edge("f10", "a3", "d3"),
-    edge("f13", "d3", "a4", "否"),
-    edge("f14", "a4", "a5"),
-    edge("f15", "a5", "end"),
-    # 扩展流程 2b：信息不完整 → 提示补全 → 返回步骤 2
-    edge("f4", "d1", "err1", "否", style=EDGE + "exitX=1;exitY=0.5;entryX=0;entryY=0.5;"),
-    edge("f5", "err1", "a2", "返回步骤 2",
-         style=EDGE + "exitX=0.5;exitY=0;entryX=1;entryY=0.75;", points=[(575, 183)]),
-    # 扩展流程 2a：两次密码不一致 → 提示密码不一致 → 返回步骤 2
-    edge("f7", "d2", "err2", "否", style=EDGE + "exitX=1;exitY=0.5;entryX=0;entryY=0.5;"),
-    edge("f8", "err2", "a2", "返回步骤 2",
-         style=EDGE + "exitX=1;exitY=0.5;entryX=1;entryY=0.5;", points=[(680, 409), (680, 172)]),
-    # 扩展流程 3a：用户名已存在 → 提示已被占用 → 返回步骤 2
-    edge("f11", "d3", "err3", "是", style=EDGE + "exitX=1;exitY=0.5;entryX=0;entryY=0.5;"),
-    edge("f12", "err3", "a2", "返回步骤 2",
-         style=EDGE + "exitX=1;exitY=0.5;entryX=1;entryY=0.25;", points=[(800, 623), (800, 161)]),
-]
-save("用户注册_活动图", cells, 900, 940, bg=(78, 12, 764, 896))
-
-# ================= 2. 用户注册类模型图 =================
-# 布局与样例一致：注册页面（左上）→ 注册控制器（右上）→ 用户（右下，实体）
-# 关联文字统一放线的同侧：水平线在上方，垂直线在右方。
+# ================= 4. 用户注册_类模型图 =================
+# 三栏类框按内容自适应高度（属性/方法为空时保留一行），不再出现大片空白；
+# 关联文字（关联名 + 两端多重性）统一放线同侧：水平线在上方、垂直线在右方。
 cells = []
-b, h_page = classbox("page", "boundary", "注册页面",
-                     ["注册表单"],
-                     ["显示注册表单()", "读取用户输入()", "提示错误信息()", "跳转登录页面()"],
-                     60, 80, 240)
+b, _ = fs.classbox("page", "boundary", "注册页面",
+                        ["注册表单"],
+                        ["显示注册表单()", "读取用户输入()", "提示错误信息()", "跳转登录页面()"],
+                        24, 24, 210)
 cells += b
-b, h_ctl = classbox("ctl", "control", "注册控制器",
-                    [],
-                    ["校验输入完整性()", "校验两次密码一致()", "检查用户名是否存在()", "创建账户()"],
-                    460, 80, 240)
+b, _ = fs.classbox("ctl", "control", "注册控制器", [],
+                       ["校验输入完整性()", "校验两次密码一致()", "检查用户名是否存在()", "创建账户()"],
+                       414, 24, 210)
 cells += b
-b, h_user = classbox("user", "entity", "用户",
-                     ["用户名", "密码", "邮箱", "角色"],
-                     ["校验用户名唯一()", "保存账户()"],
-                     460, 420, 240)
+b, _ = fs.classbox("user", "entity", "用户",
+                        ["用户名", "密码", "邮箱", "角色"],
+                        ["校验用户名唯一()", "保存账户()"],
+                        414, 312, 210)
 cells += b
-
-# 关联 1：注册页面 → 注册控制器（水平线，全部文字在线上方）
 cells += [
-    seg("a1", 300, 172, 460, 172),
-    vertex("a1_m1", "1", TEXT, 308, 144, 24, 20),              # 页面端多重性
-    vertex("a1_m2", "1", TEXT, 428, 144, 24, 20),              # 控制器端多重性
-    vertex("a1_name", "提交注册请求", TEXT, 335, 144, 90, 20),  # 关联名居中
+    fs.poly("a1", [(234, 120), (414, 120)], fs.SEG_OPEN),
+    fs.label("a1_m1", "1", 240, 92, 16),
+    fs.label("a1_name", "提交注册请求", 280, 92, 100),
+    fs.label("a1_m2", "1", 388, 92, 16),
+    fs.poly("a2", [(519, 216), (519, 312)], fs.SEG_OPEN),
+    fs.label("a2_m1", "1", 532, 232, 20, align="left"),
+    fs.label("a2_name", "查重并创建", 532, 260, 90, align="left"),
+    fs.label("a2_m2", "0..1", 532, 288, 40, align="left"),
 ]
-# 关联 2：注册控制器 → 用户（垂直线，全部文字在线右方）
+fs.save(OUT / "用户注册_类模型图.drawio", cells, page_w=648, page_h=552)
+
+# ================= 5. 用户登录_类模型图 =================
+cells = []
+b, _ = fs.classbox("page", "boundary", "登录页面",
+                        ["登录表单"],
+                        ["显示登录表单()", "读取用户输入()", "提示错误信息()", "按角色跳转页面()"],
+                        24, 24, 210)
+cells += b
+b, _ = fs.classbox("ctl", "control", "登录控制器", [],
+                       ["校验输入完整性()", "验证账户()", "判断角色()"],
+                       414, 24, 210)
+cells += b
+b, _ = fs.classbox("user", "entity", "用户",
+                        ["用户名", "密码", "邮箱", "角色"],
+                        ["验证密码()"],
+                        414, 288, 210)
+cells += b
 cells += [
-    seg("a2", 580, 80 + h_ctl, 580, 420),
-    vertex("a2_m1", "1", TEXT_L, 592, 262, 24, 20),            # 控制器端多重性
-    vertex("a2_name", "查重并创建", TEXT_L, 592, 328, 90, 20),  # 关联名居中
-    vertex("a2_m2", "0..1", TEXT_L, 592, 390, 40, 20),         # 用户端多重性
+    fs.poly("a1", [(234, 120), (414, 120)], fs.SEG_OPEN),
+    fs.label("a1_m1", "1", 240, 92, 16),
+    fs.label("a1_name", "提交登录请求", 280, 92, 100),
+    fs.label("a1_m2", "1", 388, 92, 16),
+    fs.poly("a2", [(519, 192), (519, 288)], fs.SEG_OPEN),
+    fs.label("a2_m1", "1", 532, 208, 20, align="left"),
+    fs.label("a2_name", "查找并验证", 532, 236, 90, align="left"),
+    fs.label("a2_m2", "0..1", 532, 264, 40, align="left"),
 ]
-save("用户注册_类模型图", cells, 800, 700, bg=(50, 68, 660, 572))
+fs.save(OUT / "用户登录_类模型图.drawio", cells, page_w=648, page_h=504)
 
-# ================= 3. 用户注册协作图 =================
-# 布局：访客（左）— 注册页面（中上）— 注册控制器（中下）— 用户实体（右）。
-# 参与者按用例描述标注为"访客"（本用例参与者即访客/未注册用户），实体对象为"用户"，
-# 两者不同名，避免消息收发的歧义。
-# 每条消息一根两端坐标写死的独立直线段 + 紧贴该线的编号标签；双向消息画两条
-# 平行线（1/8、2/7、3/4、5/6 各一对），箭头方向即消息方向。
-# 消息编号与用例基本流程一一对应：1（输入）→2（提交）→3/4（检查用户名）
-# →5/6（创建账户）→7（提示成功并跳转）→8（显示登录页）。
-cells = [
-    vertex("actor", "访客", ACTOR, 60, 100, 30, 60),
-    vertex("page", "注册页面", BOX, 280, 90, 200, 56),
-    vertex("ctl", "注册控制器", BOX, 280, 250, 200, 130),
-    vertex("user", "用户", BOX, 700, 250, 200, 130),
+# ================= 6. 用户注册_协作图 =================
+# 版式骨架：参与者（左）— 页面（上）— 控制器（下）— 实体（右）。
+# 1/8 走参与者↔页面的横线；2/7 走页面↔控制器的竖线（标签分列线的左右）；
+# 3/4/5/6 走控制器↔实体的四条平行横线（标签贴各自线上方）。
+fs.save(OUT / "用户注册_协作图.drawio", [
+    fs.vertex("actor", "访客", fs.ACTOR, 40, 120, 30, 60),
+    fs.vertex("page", "注册页面", fs.SYS, 220, 100, 150, 50),
+    fs.vertex("ctl", "注册控制器", fs.SYS, 220, 240, 150, 120),
+    fs.vertex("user", "用户", fs.BOX, 560, 240, 150, 120),
 
-    # 1: 用户 → 注册页面（上线，箭头向右，标签在线上方）
-    seg("m1", 100, 112, 280, 112),
-    vertex("m1_t", "1: 输入注册信息", TEXT, 100, 84, 180, 20),
-    # 8: 注册页面 → 用户（下线，箭头向左，标签在线下方）
-    seg("m8", 280, 136, 100, 136),
-    vertex("m8_t", "8: 跳转登录页", TEXT, 100, 146, 170, 20),
+    fs.poly("m1", [(70, 124), (220, 124)]),
+    fs.label("m1_t", "1: 输入注册信息", 60, 100, 140),
+    fs.poly("m8", [(220, 142), (70, 142)]),
+    fs.label("m8_t", "8: 跳转登录页", 60, 152, 160),
 
-    # 2: 注册页面 → 注册控制器（左线，箭头向下，标签在线左侧）
-    seg("m2", 340, 146, 340, 250),
-    vertex("m2_t", "2: 提交注册请求", TEXT_R, 188, 180, 140, 20),
-    # 7: 注册控制器 → 注册页面（右线，箭头向上，标签在线右侧）
-    seg("m7", 420, 250, 420, 146),
-    vertex("m7_t", "7: 提示注册成功", TEXT_L, 432, 212, 140, 20),
+    fs.poly("m2", [(270, 150), (270, 240)]),
+    fs.label("m2_t", "2: 提交注册请求", 150, 174, 110, align="right"),
+    fs.poly("m7", [(310, 240), (310, 150)]),
+    fs.label("m7_t", "7: 提示注册成功", 316, 174, 110, align="left"),
 
-    # 3/5: 注册控制器 → 用户实体（两条平行下线，标签各自紧贴本线上方）
-    seg("m3", 480, 265, 700, 265),
-    vertex("m3_t", "3: 检查用户名", TEXT, 540, 239, 100, 20),
-    seg("m5", 480, 335, 700, 335),
-    vertex("m5_t", "5: 创建新账户", TEXT, 540, 309, 100, 20),
-    # 4/6: 用户实体 → 注册控制器（两条平行上线，标签同样紧贴本线上方）
-    seg("m4", 700, 300, 480, 300),
-    vertex("m4_t", "4: 返回检查结果", TEXT, 530, 274, 120, 20),
-    seg("m6", 700, 370, 480, 370),
-    vertex("m6_t", "6: 返回创建结果", TEXT, 530, 344, 120, 20),
-]
-save("用户注册_协作图", cells, 980, 420, bg=(48, 72, 864, 320))
+    fs.poly("m3", [(370, 265), (560, 265)]),
+    fs.label("m3_t", "3: 检查用户名", 380, 243, 110),
+    fs.poly("m4", [(560, 295), (370, 295)]),
+    fs.label("m4_t", "4: 返回检查结果", 380, 273, 120),
+    fs.poly("m5b", [(370, 325), (560, 325)]),
+    fs.label("m5b_t", "5: 创建新账户", 380, 303, 110),
+    fs.poly("m6", [(560, 355), (370, 355)]),
+    fs.label("m6_t", "6: 返回创建结果", 380, 333, 120),
+], page_w=734, page_h=384)
+
+# ================= 7. 用户登录_协作图 =================
+# 与注册协作图同一骨架，消息少一条；参与者名字按用例描述统一为"普通用户"。
+fs.save(OUT / "用户登录_协作图.drawio", [
+    fs.vertex("actor", "普通用户", fs.ACTOR, 40, 120, 30, 60),
+    fs.vertex("page", "登录页面", fs.SYS, 220, 100, 150, 50),
+    fs.vertex("ctl", "登录控制器", fs.SYS, 220, 240, 150, 80),
+    fs.vertex("user", "用户", fs.BOX, 540, 240, 150, 80),
+
+    fs.poly("m1", [(70, 124), (220, 124)]),
+    fs.label("m1_t", "1: 输入用户名、密码", 60, 100, 140),
+    fs.poly("m6", [(220, 142), (70, 142)]),
+    fs.label("m6_t", "6: 显示个人主页/后台管理页", 60, 152, 170),
+
+    fs.poly("m2", [(270, 150), (270, 240)]),
+    fs.label("m2_t", "2: 提交登录\n（用户名、密码）", 150, 174, 110, 34, align="right"),
+    fs.poly("m5", [(310, 240), (310, 150)]),
+    fs.label("m5_t", "5: 按角色跳转页面", 316, 174, 115, align="left"),
+
+    fs.poly("m3", [(370, 270), (540, 270)]),
+    fs.label("m3_t", "3: 验证账户", 380, 248, 110),
+    fs.poly("m4", [(540, 304), (370, 304)]),
+    fs.label("m4_t", "4: 返回验证结果与角色", 380, 282, 130),
+], page_w=714, page_h=344)
 
 print("done.")

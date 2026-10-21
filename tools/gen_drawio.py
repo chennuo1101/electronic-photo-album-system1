@@ -1,113 +1,90 @@
-# -*- coding: utf-8 -*-
-"""生成两张 .drawio 图：系统体系结构图、功能框架图（黑白统一风格）v3
-修复：连线穿越矩形框的问题（树状图改走线：横线走上方、竖线走列间隙）；
-照片存储分前期/后期两阶段表达。
+"""系统图 v2.1：分层职责与部署边界、系统到用例的功能分解。
+
+样式全部引用 figstyle；图号与图名由报告排版添加。
 """
 from pathlib import Path
+import figstyle as fs
+from figure_layout import Figure
 
-OUT = Path(__file__).resolve().parent.parent / "docs" / "图稿"
-OUT.mkdir(parents=True, exist_ok=True)
+OUT = Path(__file__).resolve().parent.parent / 'docs' / '图稿'
+BOTH = fs.SEG_JUMP + 'startArrow=block;startFill=1;'
+BOLD = fs.SYS + 'fontStyle=1;'
 
-FONT = "fontFamily=Microsoft YaHei;fontSize=12;fontColor=#222222;"
-BOX = "rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#444444;" + FONT
-GRAY = "rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#444444;" + FONT
-NOTE = "rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#444444;dashed=1;" + FONT
-EDGE = ("edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#444444;strokeWidth=1;"
-        "fontFamily=Microsoft YaHei;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;")
-LINE = EDGE + "startArrow=none;endArrow=none;"
+# 体系结构：按 MVC 展开职责；开发期仍全在本机，后期文件存储单独标为待定。
+f = Figure(OUT, '图2-1_系统体系结构图')
+f.node('view', '表现层 · View  |  Vue 3 + TypeScript', 24, 24, 720, 176, fs.BOUNDARY)
+f.node('entry', '公共入口：注册 / 登录（管理员复用登录）', 48, 72, 672, 36, fs.SYS)
+f.node('user_ui', '普通用户页面\n相册 · 照片 · 评论', 48, 132, 408, 44, fs.SYS)
+f.node('admin_ui', '管理员页面\n相册类别维护', 480, 132, 240, 44, fs.SYS)
+f.line([(252, 108), (252, 132)])
+f.line([(600, 108), (600, 132)])
 
+f.node('service', '应用服务（本机 FastAPI + Uvicorn）', 24, 248, 720, 430, fs.BOUNDARY)
+f.node('control', '控制层 · Controller  |  FastAPI 路由', 48, 304, 672, 100, fs.BOUNDARY)
+for key, title, x in [('request', '接收请求', 64), ('validate', '输入校验', 284), ('response', '返回 JSON', 504)]:
+    f.node(key, title, x, 356, 200, 32, fs.SYS)
 
-def esc(s):
-    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "&#xa;")
+f.node('model', '模型层 · Model  |  业务逻辑与数据访问', 48, 476, 672, 176, fs.BOUNDARY)
+for i, title in enumerate(['账户逻辑', '相册与类别逻辑', '照片逻辑', '评论逻辑']):
+    f.node('business' + str(i), title, 64 + i * 164, 528, 148, 44, fs.SYS)
+f.node('data_access', '数据访问（ORM 倾向 SQLAlchemy）', 64, 604, 400, 32, fs.BOX)
+f.node('file_access', '图片文件处理', 488, 604, 216, 32, fs.BOX)
 
+# 请求/响应与业务调用/结果分别画线，均通过边界指定入口。
+f.line([(354, 200), (354, 248)])
+f.text('HTTP 请求', 244, 214, 96)
+f.line([(414, 248), (414, 200)])
+f.text('JSON 响应', 428, 214, 96)
+f.line([(354, 404), (354, 476)])
+f.text('调度业务', 256, 428, 84)
+f.line([(414, 476), (414, 404)])
+f.text('处理结果', 428, 428, 84)
 
-def vertex(cid, value, style, x, y, w, h, parent="1"):
-    return (f'<mxCell id="{cid}" value="{esc(value)}" style="{style}" vertex="1" parent="{parent}">'
-            f'<mxGeometry x="{x}" y="{y}" width="{w}" height="{h}" as="geometry"/></mxCell>')
+f.node('storage', '持久化存储（开发阶段均位于本机）', 24, 766, 720, 152, fs.BOUNDARY)
+f.node('database', 'PostgreSQL · Docker 容器\n用户、相册、照片元数据、评论、类别', 48, 822, 408, 72, fs.BOX)
+f.node('files', '本机 uploads/ 目录\n原图与缩略图文件', 480, 822, 240, 72, fs.BOX)
+f.line([(264, 678), (264, 766)], BOTH)
+f.text('SQL 读写', 154, 710, 96)
+f.line([(600, 678), (600, 766)], BOTH)
+f.text('文件读写', 614, 710, 96)
 
+f.node('future', '后期文件存储（待定）：独立文件服务器 / 对象存储', 24, 1006, 720, 60, fs.BOX + 'dashed=1;')
+f.line([(600, 918), (600, 1006)], fs.SEG_JUMP + 'dashed=1;')
+f.text('按需求演进', 614, 950, 108)
+f.save(768, 1090)
 
-def edge(eid, src, dst, label="", style=EDGE, parent="1", points=None, label_xy=None):
-    val = f' value="{esc(label)}"' if label else ' value=""'
-    if points:
-        pts = "".join(f'<mxPoint x="{x}" y="{y}"/>' for x, y in points)
-        geom = f'<mxGeometry relative="1" as="geometry"><Array as="points">{pts}</Array></mxGeometry>'
-    elif label_xy is not None:
-        geom = f'<mxGeometry relative="1" as="geometry" x="{label_xy[0]}" y="{label_xy[1]}"/>'
-    else:
-        geom = '<mxGeometry relative="1" as="geometry"/>'
-    return (f'<mxCell id="{eid}"{val} style="{style}" edge="1" parent="{parent}" '
-            f'source="{src}" target="{dst}">{geom}</mxCell>')
-
-
-def mxfile(cells, page_w, page_h):
-    body = "\n        ".join(cells)
-    return f'''<?xml version="1.0" encoding="UTF-8"?>
-<mxfile host="app.diagrams.net" type="device" version="24.7.5">
-  <diagram name="第1页" id="p1">
-    <mxGraphModel dx="1000" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="{page_w}" pageHeight="{page_h}" math="0" shadow="0">
-      <root>
-        <mxCell id="0" />
-        <mxCell id="1" parent="0" />
-        {body}
-      </root>
-    </mxGraphModel>
-  </diagram>
-</mxfile>
-'''
-
-
-# ================= 图2-1 系统体系结构图 =================
-cells = []
-cells.append(vertex("client", "客户端：浏览器（Vue 3 + TypeScript）\n普通用户 / 管理员的操作入口", GRAY, 150, 24, 480, 64))
-cells.append(vertex("srv",
-                    '<b>Web 服务器（FastAPI + Uvicorn）</b>',
-                    "rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#444444;"
-                    "verticalAlign=top;spacingTop=8;align=left;spacingLeft=14;" + FONT,
-                    90, 148, 600, 270))
-cells.append(vertex("ctl", "Controller 层（FastAPI 路由）\n接收并校验请求 → 调度业务 → 返回 JSON", BOX, 40, 56, 520, 76, parent="srv"))
-cells.append(vertex("mdl", "Model 层（业务逻辑 + 数据访问）\nPydantic 数据模型 · 业务规则 · SQLAlchemy 操作数据库", BOX, 40, 168, 520, 76, parent="srv"))
-# 照片存储：前期（实线框）
-cells.append(vertex("photos", "照片文件存储（前期）\n本机 uploads/ 目录（文件系统）\n数据库只保存路径与元数据", BOX, 770, 230, 230, 100))
-# 照片存储：后期（虚线框，待定）
-cells.append(vertex("photos2", "照片文件存储（后期 · 待定）\n独立文件服务器 / 对象存储", NOTE, 770, 396, 230, 64))
-cells.append(vertex("db", "数据库（PostgreSQL · Docker 容器）\n用户 / 相册 / 照片信息 / 评论 / 相册类别", GRAY, 150, 490, 480, 72))
-cells.append(vertex("mvcnote", "MVC 对应关系\nV = 浏览器中的 Vue 页面\nC = FastAPI 路由层\nM = 业务逻辑与数据访问层", NOTE, 770, 486, 230, 110))
-cells.append(edge("e1", "client", "ctl", "HTTP 请求 / JSON 响应", label_xy=(0.0, -14)))
-cells.append(edge("e2", "mdl", "db", "SQL 查询（SQLAlchemy）", label_xy=(0.0, -14)))
-cells.append(edge("e3", "mdl", "photos", "文件读写", label_xy=(0.0, -14)))
-cells.append(edge("e4", "photos", "photos2", "可视需求演进", style=EDGE + "dashed=1;", label_xy=(0.0, -14)))
-arch = mxfile(cells, 1100, 640)
-(OUT / "图2-1_系统体系结构图.drawio").write_text(arch, encoding="utf-8")
-
-# ================= 图2-2 功能框架图 =================
-cells = []
-cells.append(vertex("top", "电子相册系统", GRAY, 370, 24, 200, 48))
-modules = [("m1", "账户管理", 40), ("m2", "相册管理", 270), ("m3", "照片管理", 500), ("m4", "评论管理", 730)]
-modx = {cid: x for cid, _, x in modules}
-for cid, name, x in modules:
-    mc = x + 90
-    cells.append(vertex(cid, name, BOX, x, 140, 180, 44))
-    # 顶->模块：横线走 y=106（模块上方），竖直落到模块顶边中心
-    cells.append(edge("t_" + cid, "top", cid, style=LINE + "exitX=0.5;exitY=1;entryX=0.5;entryY=0;",
-                      points=[(470, 106), (mc, 106)]))
-
-TRUNK = 130  # 竖干线相对模块列左缘的偏移（落在列间隙中）
-ucases = [
-    ("m1", [("u11", "用户注册", 250, BOX), ("u12", "用户登录", 310, BOX)]),
-    ("m2", [("u21", "创建相册", 250, BOX), ("u22", "修改相册", 310, BOX), ("u23", "相册类别管理（管理员）", 370, BOX)]),
-    ("m3", [("u31", "上传图片", 250, BOX), ("u32", "浏览照片", 310, BOX)]),
-    ("m4", [("u41", "对照片评论", 250, BOX), ("u42", "（扩展）删除自己的评论", 310, NOTE)]),
+# 功能框架：三层树，扩展为用例的下一层，不与八个用例平级。
+f = Figure(OUT, '图2-2_功能框架图')
+f.node('system', '电子相册\n系统', 24, 464, 128, 72, BOLD)
+modules = [
+    ('account', '账户管理', 120, [
+        ('register', '用户注册\n用户名、密码、邮箱', 40),
+        ('login', '用户登录\n验证账户，按角色进入', 136)]),
+    ('album', '相册管理', 376, [
+        ('create', '创建相册\n名称、类别、公开/私有', 256),
+        ('modify', '修改相册\n更新本人相册信息', 344),
+        ('category', '相册类别管理\n管理员：添加、修改、删除', 432)]),
+    ('photo', '照片管理', 656, [
+        ('upload', '上传图片\n格式/大小校验，生成缩略图', 580),
+        ('browse', '浏览照片\n公开相册及本人全部相册', 668)]),
+    ('comment', '评论管理', 848, [
+        ('publish', '对照片评论\n内容校验，按时间倒序展示', 816)]),
 ]
-for mid, ulist in ucases:
-    x = modx[mid]
-    trunk_x = x + 180 + (TRUNK - 90)  # 右缘外 40px 的列间隙
-    for uid, name, y, st in ulist:
-        cy = y + 20
-        cells.append(vertex(uid, name, st, x, y, 180, 40))
-        # 模块->用例：从模块右边出来，沿列间隙竖干线向下，从右边进入用例
-        cells.append(edge("e_" + uid, mid, uid, style=LINE + "exitX=1;exitY=0.5;entryX=1;entryY=0.5;",
-                          points=[(trunk_x, 162), (trunk_x, cy)]))
-tree = mxfile(cells, 1000, 460)
-(OUT / "图2-2_功能框架图.drawio").write_text(tree, encoding="utf-8")
+f.line([(152, 500), (200, 500)], fs.SEG_NONE)
+f.line([(200, 120), (200, 848)], fs.SEG_NONE)
+for key, title, cy, cases in modules:
+    f.node(key, title, 232, cy - 26, 164, 52, BOLD)
+    f.line([(200, cy), (232, cy)], fs.SEG_NONE)
+    if len(cases) == 1:
+        f.line([(396, cy), (488, cy)], fs.SEG_NONE)
+    else:
+        f.line([(396, cy), (440, cy)], fs.SEG_NONE)
+        f.line([(440, cases[0][2] + 32), (440, cases[-1][2] + 32)], fs.SEG_NONE)
+    for cid, text, y in cases:
+        f.node(cid, text, 488, y, 256, 64, fs.BOX)
+        if len(cases) > 1:
+            f.line([(440, y + 32), (488, y + 32)], fs.SEG_NONE)
 
-print("drawio files written:", [p.name for p in OUT.glob("*.drawio")])
+f.node('delete_comment', '删除自己的评论\n（评论用例扩展，确认后删除）', 488, 952, 256, 64, fs.NOTE)
+f.line([(616, 880), (616, 952)], fs.SEG_JUMP + 'dashed=1;')
+f.save(768, 1040)

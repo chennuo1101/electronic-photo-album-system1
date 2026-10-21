@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mxfile host="app.diagrams.net" type="device" version="24.7.5">
   <diagram name="第1页" id="p1">
-    <mxGraphModel dx="1000" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="760" pageHeight="480" math="0" shadow="0">
+    <mxGraphModel dx="1000" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="554" pageHeight="368" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="boundary" value="电子相册系统" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#444444;verticalAlign=top;align=left;spacingLeft=12;spacingTop=8;fontFamily=Microsoft YaHei;fontSize=12;fontColor=#222222;" vertex="1" parent="1"><mxGeometry x="180" y="40" width="520" height="400" as="geometry"/></mxCell>
-        <mxCell id="actor_user" value="普通用户" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=#FFFFFF;strokeColor=#444444;fontFamily=Microsoft YaHei;fontSize=12;fontColor=#222222;" vertex="1" parent="1"><mxGeometry x="60" y="200" width="30" height="60" as="geometry"/></mxCell>
-        <mxCell id="uc_upload" value="上传图片" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#444444;fontFamily=Microsoft YaHei;fontSize=12;fontColor=#222222;" vertex="1" parent="1"><mxGeometry x="400" y="110" width="170" height="60" as="geometry"/></mxCell>
-        <mxCell id="uc_browse" value="浏览照片" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#444444;fontFamily=Microsoft YaHei;fontSize=12;fontColor=#222222;" vertex="1" parent="1"><mxGeometry x="400" y="290" width="170" height="60" as="geometry"/></mxCell>
-        <mxCell id="l1" value="" style="html=1;strokeColor=#444444;strokeWidth=1;fontFamily=Microsoft YaHei;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;startArrow=none;endArrow=none;exitX=1;exitY=0.35;entryX=0;entryY=0.5;" edge="1" parent="1" source="actor_user" target="uc_upload"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="l2" value="" style="html=1;strokeColor=#444444;strokeWidth=1;fontFamily=Microsoft YaHei;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;startArrow=none;endArrow=none;exitX=1;exitY=0.65;entryX=0;entryY=0.5;" edge="1" parent="1" source="actor_user" target="uc_browse"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="page_bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=none;" vertex="1" parent="1"><mxGeometry x="0" y="0" width="554" height="368" as="geometry"/></mxCell>
+        <mxCell id="boundary" value="电子相册系统" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F8FB;strokeColor=#B7C7D6;strokeWidth=1.5;align=left;verticalAlign=top;spacingLeft=16;spacingTop=12;fontFamily=Microsoft YaHei;fontSize=14;fontColor=#6B7C8C;" vertex="1" parent="1"><mxGeometry x="150" y="24" width="380" height="320" as="geometry"/></mxCell>
+        <mxCell id="uc0" value="上传图片" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2F5D8A;strokeWidth=1.5;fontFamily=Microsoft YaHei;fontSize=14;fontColor=#1F2A35;" vertex="1" parent="1"><mxGeometry x="350" y="86" width="160" height="52" as="geometry"/></mxCell>
+        <mxCell id="uc1" value="浏览照片" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2F5D8A;strokeWidth=1.5;fontFamily=Microsoft YaHei;fontSize=14;fontColor=#1F2A35;" vertex="1" parent="1"><mxGeometry x="350" y="256" width="160" height="52" as="geometry"/></mxCell>
+        <mxCell id="actor0" value="普通用户" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=#FFFFFF;strokeColor=#1F2A35;strokeWidth=1.5;fontFamily=Microsoft YaHei;fontSize=14;fontColor=#1F2A35;" vertex="1" parent="1"><mxGeometry x="60" y="167.0" width="30" height="60" as="geometry"/></mxCell>
+        <mxCell id="edge1" value="" style="html=1;rounded=0;strokeColor=#4A5A6A;strokeWidth=1.5;startArrow=none;endArrow=none;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="197.0" as="sourcePoint"/><mxPoint x="350" y="112" as="targetPoint"/></mxGeometry></mxCell>
+        <mxCell id="edge2" value="" style="html=1;rounded=0;strokeColor=#4A5A6A;strokeWidth=1.5;startArrow=none;endArrow=none;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="90" y="197.0" as="sourcePoint"/><mxPoint x="350" y="282" as="targetPoint"/></mxGeometry></mxCell>
       </root>
     </mxGraphModel>
   </diagram>

@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-"""演示图：账户管理模块用例图 + 用户注册活动图（教学示意图）v2"""
+"""教学演示图（旧版黑白，不入报告，不再更新）。
+
+正式图稿请使用 tools/figstyle.py（v2.1）与 docs/交付/ 下的成员脚本。
+"""
 import sys
 from pathlib import Path
 
