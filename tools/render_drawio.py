@@ -14,6 +14,7 @@ import argparse
 import math
 import os
 import sys
+import time
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -274,6 +275,19 @@ def draw_vertex(draw, value, kv, x, y, w, h, scale):
     draw_text(draw, value, x, y, w, h, kv, scale)
 
 
+def save_with_retry(img, out, **kw):
+    """Windows 下杀毒/索引软件偶尔短暂占用文件，保存失败时重试几次。"""
+    last = None
+    for _ in range(6):
+        try:
+            img.save(out, **kw)
+            return
+        except OSError as exc:
+            last = exc
+            time.sleep(0.3)
+    raise last
+
+
 def render(src, scale=2):
     model = ET.parse(src).getroot().find(".//mxGraphModel")
     W = int(model.get("pageWidth")) * scale
@@ -345,7 +359,7 @@ def render(src, scale=2):
         draw_text(draw, value, x, y, w, h, kv, scale, bg=True)
 
     out = Path(src).with_suffix(".png")
-    img.save(out)
+    save_with_retry(img, out)
     print(f"rendered: {out} ({W}x{H})")
 
 

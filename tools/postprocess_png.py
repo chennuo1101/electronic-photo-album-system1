@@ -9,6 +9,7 @@
     python tools/postprocess_png.py images --margin 32 --scale 2
 """
 import argparse
+import time
 from pathlib import Path
 
 from PIL import Image, ImageChops
@@ -33,7 +34,16 @@ def process(path, margin=32, scale=2, font_size=14):
     w, h = img.size
     canvas = Image.new("RGB", (w + margin * 2, h + margin * 2), WHITE)
     canvas.paste(img, (margin, margin))
-    canvas.save(path, optimize=True)
+    last = None
+    for _ in range(6):
+        try:
+            canvas.save(path, optimize=True)
+            break
+        except OSError as exc:
+            last = exc
+            time.sleep(0.3)
+    else:
+        raise last
 
     content_px = w / scale                      # 内容宽度的 drawio 坐标
     eff_pt = font_size * FULL_WIDTH_PT / content_px if content_px else 0

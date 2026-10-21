@@ -83,6 +83,9 @@ SEG_NONE = (f"html=1;rounded=0;strokeColor={EDGE};strokeWidth=1.5;"
             f"startArrow=none;endArrow=none;")
 # 与其它线交叉时画跨越符号（小半圆桥），避免"裸交叉"看起来像连在一起
 SEG_JUMP = SEG + "jumpStyle=arc;jumpSize=6;"
+# 拆段后仅作过渡、没有箭头的那一段（箭头由后续段负责）
+SEG_JUMP_NONE = (f"html=1;rounded=0;strokeColor={EDGE};strokeWidth=1.5;"
+                 f"startArrow=none;endArrow=none;jumpStyle=arc;jumpSize=6;")
 
 
 def esc(s):
